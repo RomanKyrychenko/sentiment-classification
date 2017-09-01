@@ -9,7 +9,7 @@ senti_words <- readxl::read_excel("~/infovis/senti_words.xlsx")
 
 lexicon::hash_sentiment_huliu
 lexicon::hash_emoticons
-lexicon::hash_sentiment_jockers
+lexicon::hash_sentiment_jockers 
 lexicon::hash_sentiment_nrc
 
 sentiword <- as_data_frame(lexicon::hash_sentiment_sentiword)

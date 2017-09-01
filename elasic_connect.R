@@ -5,14 +5,14 @@ q = '{
 "query": {
 "bool": {
 "must": [
-{
-  "exists": {
-  "field": "target"
+        {
+          "exists": {
+              "field": "target"
+          }
+        }
+      ]
+    }
   }
-}
-]
-}
-}
 }'
 
 connect(es_host = "13.59.27.188", es_port = 9200)
