@@ -1,0 +1,17 @@
+@import url("//fonts.googleapis.com/css?family=Lobster|Cabin:400,700");
+
+h2 {
+  font-family: 'Lobster', cursive;
+  font-weight: 500;
+  line-height: 1.1;
+  color: #ad1d28;
+}
+
+body {
+    background-image: url("paper.gif");
+    background-color: #cccccc;
+}
+
+.content-wrapper, .right-side {
+      background-image: url(http://zagonka.ru/uploads/posts/2015-05/1432030619_1607854.jpg);
+}

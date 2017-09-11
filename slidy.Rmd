@@ -1,0 +1,304 @@
+---
+title    : Семантичний аналіз Corestone
+substitle: Набір візуалізацій та метрик на прикладі послання Петра Порошенка до Верховної Ради
+author   : Роман Кириченко
+job      : Data scientist
+widgets  : [mathjax, quiz, bootstrap, interactive] # {mathjax, quiz, bootstrap}
+ext_widgets : {rCharts: [libraries/nvd3, libraries/leaflet, libraries/dygraphs]}
+mode : selfcontained # {standalone, draft}
+logo: logo.png
+output: 
+  ioslides_presentation:
+    css: st.css
+
+--- #id3 bg:url(assets/css/slide.svg)
+
+## Основні візуалізації та метрики
+
+**Матеріал:** послання Петра Порошенка до Верховної Ради 2014-2017
+
+**Візуалізації та метрики:**
+- Wordcloud
+- Comparison cloud
+- Correspondence analysis
+- Correlation analysis
+- Кількість слів
+- Вода
+- Нудота
+- Найвживаніші слова за частинами мови
+
+```{r setup, include=FALSE}
+Sys.setlocale(,"UK_ua")
+poslanna <- read.csv("~/poslanna.csv", stringsAsFactors = F)
+
+library(xml2)
+library(httr)
+library(reticulate)
+library(magrittr)
+library(tidyverse)
+library(tidytext)
+library(reshape2)
+library(wordcloud)
+library(widyr)
+library(igraph)
+library(ggraph)
+library(knitr)
+library(RColorBrewer)
+mycolors = c(brewer.pal(name="Dark2", n = 8), brewer.pal(name="Paired", n = 9))
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+--- &twocol w1:60% w2:40% #id1 bg:url(assets/css/slide.svg)
+## Wordcloud
+
+*** =left
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=TRUE}
+sw <- data_frame(word=c("без", "більш", "більше", "буде","анатолій", "начебто", "би", "був", "була", "були", "було", "бути", "вам", "вас", "адже", "увесь", "уздовж", "раптом", "замість", 
+                        "поза", "униз", "унизу", "усередині", "в", "навколо", "от", "втім", "усі", "завжди", "усього", "усіх", "усю", "ви", "де", "так", "давай", "давати", "навіть", 
+                        "для", "до", "досить", "інший", "його", "йому", "її", "її", "їй", "якщо", "є", "ще", "же", "за", "за винятком", "тут", "з", "через","або", "їм", "мати", 
+                        "іноді", "їх", "якось", "хто", "коли", "крім", "хто", "куди", "чи", "або", "між", "мене", "мені", "багато", "може", "моє", "мої", "мій", "ми", "на", "назавжди",
+                        "над", "треба", "нарешті", "нас", "наш", "не", "його", "ні", "небудь", "ніколи", "їм", "їх", "нічого", "але", "ну", "про", "однак", "він", "вона", "вони", 
+                        "воно", "знову", "від", "тому", "дуже", "перед", "по", "під", "після", "потім", "тому", "тому що", "майже", "при", "про", "раз", "хіба", "свою", "себе", 
+                        "сказати", "з", "зовсім", "так", "також", "такі", "такий", "там", "ті", "тебе", "тем", "тепер", "те", "тоді", "того", "теж", "тієї", "тільки", "тому", "той", 
+                        "отут", "ти", "уже", "хоч", "хоча", "чого", "чогось", "чий", "чому", "через", "що", "щось", "щоб", "ледве", "чиє", "чия", "ця", "ці", "це", "цю", "цього", 
+                        "цьому", "цей","і","у","та","я","а","й","як","які","бо","із","який","тим","нам","б","всі","ж","яку","зі","яких","всіх","цим","1997","1991","1992","1998","2008",
+                        "2009","2010","2011","2012","2013","2014","2015","2016","2017","рік","все","роком","році","нехай","хай","року","яка","них","ним","1996","то","-","го","усім","має",
+                        "яким","задля","буду","тих","всім","лише","вже","саме","звісно","1","т","3","17","это",
+                        "щодо","модератор","александр","роман","игорь","любовь","татьяна","галина","геннадий",
+                        "людмила","можна","гаразд","тобто","добре","зараз","карина","владимир","очень",
+                        "очень","какие","почему","такое","самом","оно","скорее","вроде","цих","ніж","кроме","така",
+                        "таки","свои","какое","таке","кем","кого","хтось","такая","ось","думаєте","10","0","20",
+                        "кем","пока","тех","такие","нина","вообще","му","ваше","нє","своей","самое","5","взагалі",
+                        "нему","чём","её","нём","друзі","почула","ваши","чим","моё","чему","якій","цієї","эта",
+                        "марта","сергей","вопрос","вважаю","наприклад","например","ок","шо","хотя","такій","этих",
+                        "тимур","света","типа","пожалуйста","неї","кому","гм","валентина","списибі","оксана",
+                        "25","50","хочу","ребята","понимаете","кажуть","этим","который","понятно","далее","смотрите",
+                        "которых","вибачте","десь","ага","скажите","дима","скажите","принципе","которая","якийсь",
+                        "далі","ким","лет","говорят","такого","ч","деякі","нею","4","єслі","ше","неё","таких",
+                        "років","которые","порошенко","гриценко","гриценка","садовой","тимошенко","гройсман",
+                        "пусть","оці","года","91","колись","таку","столько","вами","ой","скажімо",
+                        "1376","3,5","16","80","734","16","2003","15","2000","извините","гройсмана","туда",
+                        "вся","считаю","именно","всьо","оце","пані","тої","тіпа","якась","поэтому","якусь",
+                        "наверное","бачу","пан","40","каких","само","какого","таком","думаю","скільки","кажу",
+                        "знаете","сказав","30","яке","говорю","мере","такую","помню","сути","действительно","знаєте",
+                        "якісь","2","олег","знаю","наталья","юлия","всё","артём","ещё","просто",tm::stopwords("ru")))
+poslanna %>%
+  select(Текст) %>% 
+  unnest_tokens(word, Текст) %>%
+  anti_join(sw,by="word") %>% 
+  group_by(word) %>% 
+  summarize(n=n()) %>%
+  with(wordcloud(word,n,max.words = 1000))
+```
+*** =right
+Найпоширеніший варіант семантичної візуалізації. В її основі - частота вживання слів у тексті передана через розмір слів у графіку. Від них відмінусовано так звані стоп-слова.
+
+--- &twocol w1:40% w2:60% #id2 bg:url(assets/css/slide.svg)
+## Comparison Cloud 
+
+*** =left
+
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=TRUE}
+poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  anti_join(sw,by="word") %>% 
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>%
+  arrange(desc(n)) %>% 
+  acast(word ~ Рік, value.var = "n", fill = 0) %>%
+  comparison.cloud(max.words = 1000,colors = mycolors, random.order=FALSE,c(4,0.1), title.size=1)
+```
+
+*** =right
+
+Ідея цієї візуалізації схожа до кореспонденс аналізу - порівняння відмінності семантик за певними групами. Ця візуалізація акуратніше розміщує слова на візуалізації, однак мало повідомляє про ступінь різності чи схожості семантик.
+
+--- &twocol w1:40% w2:60% #id4 bg:url(assets/css/slide.svg)
+## Correspondence analysis
+
+*** =left
+
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=TRUE}
+library("FactoMineR")
+library("factoextra")
+library(foreign)
+
+wds <- poslanna %>% 
+  unnest_tokens(word, Текст,token = "ngrams", n=2) %>% 
+  group_by(word) %>% 
+  summarize(n=n()) %>% 
+  anti_join(sw,by="word") %>% 
+  filter(n<10)
+
+pc <- poslanna %>% 
+  group_by(Рік) %>% 
+  unnest_tokens(word, Текст,token = "ngrams", n=2) %>% 
+  anti_join(sw,by="word")%>% 
+  anti_join(wds,by="word")
+
+crsp <- CA(table(pc$word,pc$Рік),graph = F)
+
+fviz_ca_biplot(crsp, col.row="orange", col.col ="steelblue") +
+  theme_minimal() + 
+  ggtitle("")+
+  theme(axis.title = element_blank()
+  )
+```
+
+*** =right
+
+Порівняно з попередньою візуалізацією тут можна виміряти семантичну дистанцію між групами.
+
+--- &twocol w1:40% w2:60% #id5 bg:url(assets/css/slide.svg)
+## Correlation analysis
+
+*** =left
+
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=TRUE}
+bg <- poslanna %>% 
+  select(Текст) %>%  
+  unnest_tokens(word, Текст, token = "ngrams", n=2) 
+bg$id <- c(1:nrow(bg)) 
+rw <- bg %>% unnest_tokens(w, word) %>% group_by(w) %>% summarize(n=n()) %>% filter(n>4)
+bg %>% unnest_tokens(w, word) %>% semi_join(rw,by="w") %>% pairwise_cor(w, id, sort = TRUE) %>%
+  filter(correlation > .3) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+```
+
+*** =right
+
+**Кореляційний аналіз** і побудова на його основі графів. Можна будувати графи між найбільш згадуваними словами, як тут. Так і між конкретно обраними словами. Наприклад, можна поглянути, які слова найчастіше стоять зі словом Росія, і які в свою чергу стоять близько із цими словами і т.д.
+
+--- &twocol w1:40% w2:60% #id6 bg:url(assets/css/slide.svg)
+## Correlation analysis 2
+
+*** =left
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=TRUE}
+bg <- poslanna %>% 
+  select(Текст) %>%  
+  unnest_tokens(word, Текст, token = "ngrams", n=2) 
+bg$id <- c(1:nrow(bg)) 
+rw <- bg %>% unnest_tokens(w, word) %>% group_by(w) %>% summarize(n=n()) %>% filter(n>1)
+bg %>% unnest_tokens(w, word)  %>% semi_join(rw,by="w") %>% pairwise_cor(w, id, sort = TRUE) %>%
+  filter(item1=="росія") %>% 
+  filter(correlation > .1) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+```
+
+*** =right
+Приклад найбільших кореляцій з обраним словом.
+
+--- &twocol w1:40% w2:60% #id7 bg:url(assets/css/slide.svg)
+## Вода
+
+*** =left
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=TRUE}
+k1 <- poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  anti_join(sw,by="word") %>% 
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>% 
+  group_by(Рік) %>% 
+  summarize(`Cлів`=sum(n))
+k2 <- poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>% 
+  group_by(Рік) %>% 
+  summarize(`Cлів2`=sum(n))
+k <- left_join(k1,k2,by="Рік")
+
+k3 <- k %>% mutate(Вода=paste0(round(`Cлів`/`Cлів2`,4)*100,"%")) %>% select(Рік, Вода)
+k4 <- poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>% 
+  group_by(Рік) %>% 
+  summarize(`Унікальних слів`=n())
+k5 <- poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>% 
+  group_by(Рік) %>% 
+  summarize(`Загалом слів`=sum(n))
+
+kable(left_join(k5,left_join(k4,k3,by="Рік"),by="Рік"))
+```
+*** =right
+
+**Вода** - співвідношення значущих слів (всі слова, крім другорядних членів мови) до всіх слів. Норма води 65%.
+
+З цих показників можна судити, наскільки лексично різноманітним був виступ.
+
+--- &twocol w1:40% w2:60% #id8 bg:url(assets/css/slide.svg)
+
+## Нудота документу
+
+*** =left
+
+**Класична**
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=T}
+t1 <- poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  anti_join(sw,by="word") %>% 
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>% 
+  group_by(Рік) %>% 
+  top_n(n = 1, wt = n) %>% 
+  mutate(Нудота=round(sqrt(n),2))
+
+kable(left_join(k1,t1,by="Рік") %>% select(Рік, Нудота))
+```
+
+**Академічна**
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=T}
+t1 <- poslanna %>%
+  unnest_tokens(word, Текст) %>%
+  anti_join(sw,by="word") %>% 
+  group_by(word,Рік) %>% 
+  summarize(n=n()) %>% 
+  group_by(Рік) %>% 
+  top_n(n = 5, wt = n) %>% 
+  group_by(Рік) %>% 
+  summarize(n=sum(n)) 
+
+kable(left_join(k1,t1,by="Рік") %>% 
+  mutate(Нудота=paste0(round(n/`Cлів`,4)*100,"%")) %>% select(Рік, Нудота))
+```
+
+*** =right
+З цих показників можна судити, наскільки лексично різноманітним був виступ.
+
+**Класична тошнота** - корінь квадратний найбільш згадуваного в тексті слова:
+$$\sqrt{word_{max(n)}}$$
+
+**Академічна тошнота** - відсоток частоти згадування топ-5 найбільш згадуваних слів в тексті.
+
+$$\frac{word_{max(n)}}{\sum word}$$
+
+--- &twocol w1:40% w2:60% #id9 bg:url(assets/css/slide.svg)
+
+## Топи за частинами мови
+
+*** =left
+```{r,echo=F, message=F,warning=FALSE,error=FALSE,cache=T}
+pos <- readxl::read_excel("~/poslanna.xlsx")
+kable(pos %>% group_by(`Частина мови`, Рік)  %>% 
+  top_n(n = 1, wt = n) %>% select(`Частина мови`,word,Рік) %>% filter(`Частина мови`=="іменник" | `Частина мови`=="прикметник" | `Частина мови`=="дієслово")  %>% spread(key = `Частина мови`,word))
+```
+
+*** =right
+
+Ідея - показати найбільш вживані слова за частинами мови.

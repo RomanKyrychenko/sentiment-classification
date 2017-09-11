@@ -1,0 +1,49 @@
+---
+title: "Topic modeling"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale(,"UK_ua")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Модель
+
+Система базується на моделі **LDA** (Latent Dirichlet Allocation). Конкретно реалізовано **WarpLDA** модель, яка дозволяє достатньо швидко зробити класифікацію текстів на велику кількість тем.
+
+Код базується на бібліотеці [text2vec](http://text2vec.org/). Векторне представлення слів пришвидшує обробку масивів. Альтернатива - робота з матрицями в рамках бібліотеки **tm**, однак у неї є недоліки:
+
+- більше використання ресурсів машини
+- некоректна робота з кирилицею
+
+## Ядро
+
+Основа моделі:
+
+```{r cars, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(stringr)
+library(text2vec)
+data("movie_review")
+it = itoken(movie_review$review, progressbar = FALSE, ids=movie_review$ids)
+v = create_vocabulary(it) %>% 
+  prune_vocabulary(doc_proportion_max = 0.1, term_count_min = 5)
+vectorizer = vocab_vectorizer(v)
+dtm = create_dtm(it, vectorizer)
+lda_model = LDA$new(n_topics = 10)
+
+doc_topic_distr = lda_model$fit_transform(x = dtm, n_iter = 1000, 
+                              convergence_tol = 0.001, n_check_convergence = 25,progressbar = F)
+
+gammaDF <- as_tibble(doc_topic_distr)
+names(gammaDF) <- c(1:10)
+    
+data_frame(ID = attr(doc_topic_distr,"dimnames")[[1]],
+       Тема = as.numeric(apply(gammaDF,1,function(x) names(gammaDF)[which(x==max(x))][1])),
+       Відповідність = apply(gammaDF,1,max))
+```
+
+## Вхідний файл
+
+На вхід береться таблиця Excel
